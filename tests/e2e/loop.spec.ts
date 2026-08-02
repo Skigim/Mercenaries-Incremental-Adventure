@@ -76,7 +76,11 @@ test('completing the starting mission unlocks the next one', async ({ page }) =>
 
 test('progress survives a reload without rerolling loot', async ({ page }) => {
   await page.addInitScript(
-    ([key, save]) => window.localStorage.setItem(key as string, save as string),
+    ([key, save]) => {
+      if (!window.localStorage.getItem(key as string)) {
+        window.localStorage.setItem(key as string, save as string);
+      }
+    },
     [SAVE_KEY, JSON.stringify(saveWithHeroDispatched(HOUR))],
   );
 

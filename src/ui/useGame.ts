@@ -24,8 +24,14 @@ export interface Game {
 }
 
 export function useGame(storage: Storage = browserStorage()): Game {
+  // Pin the first render's storage: a default parameter re-evaluates on
+  // every call, and a fresh identity would churn the autosave effect.
+  const storageRef = useRef<Storage | null>(null);
+  storageRef.current ??= storage;
+  const store = storageRef.current;
+
   const [boot] = useState(() => {
-    const loaded = load(storage, Math.floor(Math.random() * 2 ** 31));
+    const loaded = load(store, Math.floor(Math.random() * 2 ** 31));
     // The boot resolution is what the welcome-back summary reports.
     return resolveUpTo(loaded.state, systemClock.now());
   });
@@ -38,23 +44,45 @@ export function useGame(storage: Storage = browserStorage()): Game {
 
   // Re-derive on an interval. This drives progress bars and picks up
   // completions; it is a display concern, never a source of truth.
+  // An event-free resolution returns the previous object untouched so
+  // idle ticks cannot starve the autosave debounce below.
   useEffect(() => {
     const id = setInterval(() => {
       const t = systemClock.now();
       setNow(t);
-      setState((prev) => resolveUpTo(prev, t).state);
+      setState((prev) => {
+        const resolved = resolveUpTo(prev, t);
+        return resolved.events.length === 0 ? prev : resolved.state;
+      });
     }, RENDER_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
 
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => save(storage, state), SAVE_DEBOUNCE_MS);
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      save(store, state);
+    }, SAVE_DEBOUNCE_MS);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [state, storage]);
+  }, [state, store]);
+
+  // Flush a pending save on unmount instead of discarding it.
+  useEffect(
+    () => () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        save(store, stateRef.current);
+      }
+    },
+    [store],
+  );
 
   const run = useCallback((cmd: Command) => {
     setState((prev) => applyCommand(prev, cmd, systemClock.now()).state);

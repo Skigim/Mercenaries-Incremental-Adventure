@@ -68,9 +68,12 @@ export function load(
   }
 
   if (!looksLikeGameState(parsed)) return quarantine();
-  // A save from a newer build may contain fields this code cannot honour.
   if (parsed.version > CURRENT_VERSION) return quarantine();
   // Migration chain for older versions goes here as versions accrue.
 
-  return { state: sanitize(parsed), recovered: false };
+  try {
+    return { state: sanitize(parsed), recovered: false };
+  } catch {
+    return quarantine();
+  }
 }

@@ -100,6 +100,21 @@ describe('load failure modes', () => {
     const bad = JSON.stringify({ version: CURRENT_VERSION, heroes: 'not an array' });
     expect(load(memoryStorage({ [SAVE_KEY]: bad }), 1).recovered).toBe(true);
   });
+
+  it('recovers when a hero object is malformed rather than crashing', () => {
+    const bad = JSON.stringify({ ...testState(), heroes: [{}] });
+    const storage = memoryStorage({ [SAVE_KEY]: bad });
+    const { state, recovered } = load(storage, 1);
+    expect(recovered).toBe(true);
+    expect(state.heroes).toHaveLength(HERO_COUNT);
+    expect(storage.getItem(BACKUP_KEY)).toBe(bad);
+  });
+
+  it('recovers when a warehouse stack is malformed rather than crashing', () => {
+    const bad = JSON.stringify({ ...testState(), warehouse: [null] });
+    const { recovered } = load(memoryStorage({ [SAVE_KEY]: bad }), 1);
+    expect(recovered).toBe(true);
+  });
 });
 
 describe('sanitize', () => {

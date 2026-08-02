@@ -1,4 +1,5 @@
-import type { ItemDef, ItemId, MissionDef, MissionId } from './types';
+import type { Hero, ItemDef, ItemId, MissionDef, MissionId } from './types';
+import { yieldMultiplier } from './derive';
 
 const itemList: ItemDef[] = [
   { id: 'copper_ore', name: 'Copper Ore', kind: 'material', baseValue: 1 },
@@ -95,4 +96,16 @@ export function getItem(id: ItemId): ItemDef | undefined {
 
 export function getMission(id: MissionId): MissionDef | undefined {
   return MISSIONS[id];
+}
+
+/**
+ * The largest total quantity one run of this mission can produce for this
+ * hero. A run only starts if this already fits, which is what makes
+ * "nothing lost mid-mission" true by construction rather than by cleanup.
+ * The +1 per roll covers probabilistic rounding's possible extra item.
+ */
+export function maxItemsPerRun(mission: MissionDef, hero: Hero): number {
+  const largest = Math.max(...mission.lootTable.map((e) => e.maxQty));
+  const scaled = Math.floor(largest * yieldMultiplier(hero)) + 1;
+  return mission.rollsPerRun * scaled;
 }

@@ -92,6 +92,23 @@ describe('resolveUpTo — repeat across an offline gap', () => {
     expect(twoHops.heroes[0]!.pack).toEqual(oneHop.heroes[0]!.pack);
     expect(twoHops.rng.cursor).toBe(oneHop.rng.cursor);
   });
+
+  it('resolving in two hops equals resolving in one with multiple active heroes', () => {
+    const make = () => testState({
+      heroes: [
+        testHero({ id: 'a', assignment: { missionId: GATHER.id, startedAt: T0, repeat: true, blockedAt: null } }),
+        testHero({ id: 'b', assignment: { missionId: GATHER.id, startedAt: T0 + 7_000, repeat: true, blockedAt: null } }),
+      ],
+    });
+    const gap = GATHER.durationMs * 10;
+    const oneHop = resolveUpTo(make(), T0 + gap).state;
+    const first = resolveUpTo(make(), T0 + gap / 2 + 3_000).state;
+    const twoHops = resolveUpTo(first, T0 + gap).state;
+    expect(twoHops.heroes[0]!.pack).toEqual(oneHop.heroes[0]!.pack);
+    expect(twoHops.heroes[1]!.pack).toEqual(oneHop.heroes[1]!.pack);
+    expect(twoHops.rng.cursor).toBe(oneHop.rng.cursor);
+    expect(twoHops.completions).toEqual(oneHop.completions);
+  });
 });
 
 describe('resolveUpTo — carry capacity', () => {

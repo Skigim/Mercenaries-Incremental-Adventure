@@ -35,7 +35,13 @@ Because the toggle is unbounded, offline accrual needs an explicit cap. See *Car
 
 ### Carry capacity
 
-A hero holds loot in a **pack** until collected. Capacity is measured in **slots**, where one slot holds one stack of a material or one trinket. Before starting each repeat, the hero checks for a free slot: if there is room they go, if not they idle. Nothing is ever lost mid-mission.
+A hero holds loot in a **pack** until collected. Capacity is measured in **total item count** — 40 ore and 3 hides consume 43 of it, and a trinket consumes 1.
+
+Counting stacks rather than items would defeat the cap entirely: a hero repeating one mission draws from the same small loot table forever, so they would occupy three or four stacks on the first run and never fill up again, making offline accrual unbounded. Item count is the only measure that grows with repetition, which is the thing the cap exists to bound.
+
+**A run starts only if the pack can hold its worst case.** Before each run the hero compares `capacityRemaining` against `maxItemsPerRun(mission)` — the largest total quantity that mission's loot table can produce in a single roll, computed statically from the table. If it does not fit, the hero idles.
+
+Checking the worst case rather than the actual roll is what makes "nothing is lost mid-mission" true by construction: loot is never rolled unless it is already guaranteed to fit, so there is no overflow to truncate and no spillover state to reconcile. The cost is slight conservatism — a hero may stop with a little room to spare — which also reads correctly in fiction, since nobody sets out without room for a full haul.
 
 This is the offline cap, and it is diegetic — there is no out-of-fiction "you were away too long" rule to explain, and no message that reads as punishment for having a life. It also establishes an upgrade axis for later parts (larger packs, warehouse tiers).
 
@@ -48,6 +54,10 @@ A completed mission yields:
 - **Materials**, rolled from a weighted per-mission table, scaled by hero level. Gold is deliberately absent — in a merchant game, gold comes from *selling*. If heroes mint gold directly, crafting and the shop become optional decoration.
 - **Trinkets**, rarely. A single accessory slot means a trinket can be equipped for a yield bonus or left in the warehouse. Selling does not exist yet, so each item's `baseValue` is displayed but inert; the equip-or-bank tension is legible now and goes live with the shop.
 - **Experience**, toward levels.
+
+**Yield multipliers round probabilistically, never by truncation.** A 1.25× multiplier on a base quantity of 1 grants 1 item plus a 25% chance of a second — not `floor(1.25) = 1`, which would silently discard every fractional gain and make the first several levels feel inert. Formally: `granted = floor(q) + (rng.next() < frac(q) ? 1 : 0)`.
+
+The draw comes from the same seeded RNG as the loot roll, so results stay deterministic and reproducible across save and load. It does mean yield consumes RNG cursor positions, so the ordering of rolls within a run must be fixed and documented in the implementation.
 
 **Long-mission superiority is authored, not computed.** Better loot-per-hour lives in the loot tables themselves rather than in a duration formula. Tuning stays data-only, and no formula can quietly make a 30-second mission the global optimum.
 
@@ -120,8 +130,13 @@ interface Hero {
 
 // Capacity and yield are derived from level, not stored — one source of
 // truth, and no stale field to resynchronise after a level-up.
-carryCapacity(hero): number   // pack slots
-yieldMultiplier(hero): number // includes the equipped trinket's bonus
+carryCapacity(hero): number        // total items the pack holds
+capacityRemaining(hero): number    // carryCapacity minus items currently held
+yieldMultiplier(hero): number      // includes the equipped trinket's bonus
+
+// Static, computed from the loot table — the largest total quantity a
+// single roll of this mission can produce. Gates whether a run may start.
+maxItemsPerRun(mission): number
 
 interface ItemDef {
   id: ItemId; name: string;
@@ -163,21 +178,24 @@ Per hero with an assignment:
 ```
 cursor = assignment.startedAt
 while cursor + mission.duration <= now:
-    if pack is full:
+    if capacityRemaining(hero) < maxItemsPerRun(mission):
         assignment.blockedAt = cursor
         break
     roll loot (seeded) → pack
     grant XP; apply level-up if earned
     completions[missionId] += 1        // may unlock new missions
     emit events
+    cursor += mission.duration          // next run starts immediately
     if not repeat:
         assignment = null
         break
-    cursor += mission.duration          // next run starts immediately
-assignment.startedAt = cursor           // partial progress preserved
+if assignment:                          // may have been cleared above
+    assignment.startedAt = cursor       // partial progress preserved
 ```
 
 Heroes with a non-null `blockedAt` are skipped entirely.
+
+Two ordering details in that loop are load-bearing. `cursor` advances *before* the non-repeat break so the completed run's end time is never misattributed, and the trailing write is guarded because a non-repeat completion sets `assignment` to null — writing `startedAt` unconditionally would dereference null.
 
 **The blocked case is the subtle one.** When a pack fills, the hero stops *starting* new runs; an in-flight mission is never interrupted. On `collect`, the pack empties into the warehouse, `blockedAt` clears, and `startedAt` resets to **now** — so a hero who stood idle for six hours does not instantly bank six hours of missions they never ran.
 
@@ -191,6 +209,10 @@ A level-up partway through a gap applies to subsequent runs within that same gap
 
 **`equip` never applies retroactively,** for the same reason: resolving to `now` happens before the equip lands, so a newly-fitted trinket boosts future runs only. A player cannot equip a yield trinket after an eight-hour absence and retroactively improve loot that was already earned.
 
+**Trinkets move between exactly two places.** `equip(hero, item)` removes one instance from `GameState.warehouse` and sets `hero.trinket`; if the slot was already occupied, the displaced trinket returns to the warehouse in the same operation. `unequip(hero)` returns the trinket to the warehouse and clears the slot. Equipping sources from the warehouse only — a trinket sitting in a hero's pack must be collected first, so the pack stays a pure in-transit buffer rather than a second inventory the UI has to expose.
+
+**`toggleRepeat` to false on a blocked hero clears the assignment immediately.** A blocked hero has no run in flight — they are idle with a full pack — so there is no partial progress to preserve and leaving a dead assignment in place would only be a state to explain. The pack is untouched and still awaits `collect`. This matches `recall`, which is the point: a hero who is no longer working should not still look assigned.
+
 `collectAll()` ships in Part 1, not as a later convenience patch. A pack-based loop adds a collect step that would otherwise multiply taps by roster size, and retrofitting batch actions after launch is precisely the mistake the research documents.
 
 ### Persistence
@@ -202,9 +224,13 @@ A level-up partway through a gap applies to subsequent runs within that same gap
 All handled in core:
 
 - **Clock moves backwards** (NTP correction, user changes system time): if `now < lastResolvedAt`, resolve nothing and set `lastResolvedAt = now`. Never grant negative time.
+
+  Clamping `lastResolvedAt` alone is not enough. A hero dispatched while the clock was set ahead carries a future `startedAt`, and once the clock corrects, `cursor + duration <= now` stays false until real time catches up — the hero sits inert, potentially for months. So the same pass clamps every active assignment: `startedAt = min(startedAt, now)` and, where set, `blockedAt = min(blockedAt, now)`. The run restarts from the corrected present rather than granting time that never passed.
 - **Corrupt or unparseable save:** fall back to a fresh state rather than crashing on boot, and preserve the last-known-good under a backup key instead of overwriting it.
 - **Unknown `version`:** migrate forward through a documented chain. Refuse to load a save newer than the running code.
-- **Dangling references** (a save naming a mission or item no longer in the catalog): drop the assignment, keep the hero and the warehouse.
+- **Dangling references in a save** (a save naming a mission or item no longer in the catalog): drop the assignment, keep the hero and the warehouse. Stale keys in `completions` are left alone — they are inert, and pruning them could retract an unlock the player already earned.
+
+- **Dangling references in the catalog** are a different class of defect and get a different remedy. `MissionDef.unlockedBy` is static data compiled into the build, never serialized into a save, so no save migration can repair it. An `unlockedBy` pointing at a deleted mission strands its content permanently and silently — the mission simply never becomes available and nothing reports why. A catalog validation test asserts that every `unlockedBy` and every loot-table item ID resolves, and that the unlock graph is acyclic and fully reachable from the starting missions. This fails the build rather than degrading play.
 
 ## Testing
 
@@ -218,8 +244,16 @@ The core is pure, so a fake clock and a fixed seed make every scenario a fast de
 - `collect` on a blocked hero resets `startedAt` to now
 - `recall` mid-run keeps every completed run's loot and discards only the partial one
 - `equip` after an offline gap does not alter loot already resolved from that gap
+- a non-repeat completion clears the assignment without a null dereference on the trailing `startedAt` write
+- a fractional yield multiplier produces extra items over many seeded runs and never floors them away
+- a run whose worst-case loot exceeds remaining capacity does not start, and no partial loot is written
+- a hero repeating one mission eventually fills up, confirming capacity counts items rather than stacks
+- an assignment with a future `startedAt` is clamped on a backwards clock and resumes instead of freezing
+- `toggleRepeat(false)` on a blocked hero clears the assignment and preserves the pack
 - save → load → resolve reproduces identical results, confirming the RNG cursor survives
 - `now < lastResolvedAt` grants nothing
+
+A separate catalog validation test asserts every `unlockedBy` and loot-table ID resolves, and that the unlock graph is acyclic and reachable from the starting missions.
 
 The UI gets a Playwright pass over dispatch → wait → collect, using the repository's `webapp-testing` skill.
 

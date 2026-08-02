@@ -111,7 +111,7 @@ function collectFrom(
   hero.pack = [];
   events.push({ type: 'Collected', heroId, items: collected });
 
-  if (hero.assignment) {
+  if (hero.assignment && hero.assignment.blockedAt !== null) {
     // Restart from now: a hero who stood idle with a full pack must not
     // instantly bank the missions they never ran while blocked.
     hero.assignment.blockedAt = null;

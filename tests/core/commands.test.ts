@@ -107,6 +107,20 @@ describe('collect', () => {
     // Idle hours are not retroactively converted into completions.
     expect(next.completions[GATHER.id]).toBeUndefined();
   });
+
+  it('leaves an in-flight run untouched when collecting from an unblocked hero', () => {
+    const state = testState({
+      heroes: [testHero({
+        pack: [{ itemId: 'copper_ore', qty: 7 }],
+        assignment: { missionId: GATHER.id, startedAt: T0, repeat: true, blockedAt: null },
+      })],
+    });
+    const midRun = T0 + 10_000; // partway through the 30s run
+    const { state: next } = applyCommand(state, { type: 'collect', heroId: 'h1' }, midRun);
+    expect(next.warehouse).toEqual([{ itemId: 'copper_ore', qty: 7 }]);
+    expect(next.heroes[0]!.assignment!.startedAt).toBe(T0);
+    expect(next.heroes[0]!.assignment!.blockedAt).toBeNull();
+  });
 });
 
 describe('collectAll', () => {

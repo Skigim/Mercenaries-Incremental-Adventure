@@ -84,6 +84,22 @@ export function useGame(storage: Storage = browserStorage()): Game {
     [store],
   );
 
+  // Closing the tab does not unmount React components, so the unmount
+  // flush above never fires on that path; pagehide does. The ref is
+  // nulled after clearing because the page may survive the event (bfcache),
+  // and a nulled ref lets the next state change schedule cleanly.
+  useEffect(() => {
+    const flush = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        save(store, stateRef.current);
+      }
+    };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [store]);
+
   const run = useCallback((cmd: Command) => {
     setState((prev) => applyCommand(prev, cmd, systemClock.now()).state);
   }, []);

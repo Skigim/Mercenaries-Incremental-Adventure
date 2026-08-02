@@ -4,10 +4,9 @@ A remake/retheme of **Merchant Guilds** by Retora Games.
 
 ## Claude Skills
 
-This repo vendors a few Claude Code skills under `.claude/skills/` for use during development:
+This project has the [Claude Code CLI](https://github.com/anthropics/claude-code) plugins declared in `.claude/settings.json`, so anyone (or any subagent) working in this repo gets them automatically:
 
-- **superpowers** ([obra/superpowers](https://github.com/obra/superpowers)) — plan/brainstorm/spec/debug workflow skills (`brainstorming`, `writing-plans`, `executing-plans`, `systematic-debugging`, `test-driven-development`, etc.)
-- **webapp-testing** ([anthropics/skills](https://github.com/anthropics/skills)) — Playwright-driven UI verification
-- **frontend-design** ([anthropics/skills](https://github.com/anthropics/skills)) — guidance for avoiding generic/default-looking UI
+- **superpowers** (`obra/superpowers-marketplace`) — plan/brainstorm/spec/debug workflow skills (`brainstorming`, `writing-plans`, `executing-plans`, `systematic-debugging`, `test-driven-development`, etc.)
+- **example-skills** (`anthropics/skills`) — includes `webapp-testing` (Playwright-driven UI verification) and `frontend-design` (guidance for avoiding generic/default-looking UI), plus a few other example skills bundled in the same plugin.
 
-These were copied in manually (not installed as plugins) since this environment doesn't support `/plugin marketplace add`. They can be updated by re-pulling the source repos and copying the relevant `skills/` subdirectories back into `.claude/skills/`.
+Run `claude plugin list` to see them enabled, or `claude plugin marketplace update` to pull the latest versions.

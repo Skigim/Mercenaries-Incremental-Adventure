@@ -1,15 +1,15 @@
 import type { ItemDef, ItemId, MissionDef, MissionId } from './types';
 
 const itemList: ItemDef[] = [
-  { id: 'copper_ore', name: 'Copper Ore', kind: 'material', baseValue: 2 },
-  { id: 'iron_ore', name: 'Iron Ore', kind: 'material', baseValue: 5 },
-  { id: 'oak_log', name: 'Oak Log', kind: 'material', baseValue: 3 },
-  { id: 'wolf_pelt', name: 'Wolf Pelt', kind: 'material', baseValue: 8 },
-  { id: 'silver_ore', name: 'Silver Ore', kind: 'material', baseValue: 14 },
-  { id: 'ancient_shard', name: 'Ancient Shard', kind: 'material', baseValue: 30 },
-  { id: 'copper_band', name: 'Copper Band', kind: 'trinket', baseValue: 45, yieldBonus: 0.05 },
-  { id: 'jade_charm', name: 'Jade Charm', kind: 'trinket', baseValue: 120, yieldBonus: 0.1 },
-  { id: 'gilded_signet', name: 'Gilded Signet', kind: 'trinket', baseValue: 400, yieldBonus: 0.2 },
+  { id: 'copper_ore', name: 'Copper Ore', kind: 'material', baseValue: 1 },
+  { id: 'iron_ore', name: 'Iron Ore', kind: 'material', baseValue: 8 },
+  { id: 'oak_log', name: 'Oak Log', kind: 'material', baseValue: 1 },
+  { id: 'wolf_pelt', name: 'Wolf Pelt', kind: 'material', baseValue: 12 },
+  { id: 'silver_ore', name: 'Silver Ore', kind: 'material', baseValue: 20 },
+  { id: 'ancient_shard', name: 'Ancient Shard', kind: 'material', baseValue: 40 },
+  { id: 'copper_band', name: 'Copper Band', kind: 'trinket', baseValue: 60, yieldBonus: 0.05 },
+  { id: 'jade_charm', name: 'Jade Charm', kind: 'trinket', baseValue: 150, yieldBonus: 0.1 },
+  { id: 'gilded_signet', name: 'Gilded Signet', kind: 'trinket', baseValue: 500, yieldBonus: 0.2 },
 ];
 
 const missionList: MissionDef[] = [

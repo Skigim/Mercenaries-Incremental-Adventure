@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { MissionId } from '../../src/core/types';
+import type { MissionDef, MissionId } from '../../src/core/types';
 import { ITEMS, MISSIONS, STARTING_MISSION_IDS, getItem, getMission } from '../../src/core/catalog';
 
 describe('catalog integrity', () => {
@@ -40,11 +40,11 @@ describe('catalog integrity', () => {
   it('the unlock graph is acyclic', () => {
     const state = new Map<MissionId, 'visiting' | 'done'>();
     const walk = (id: string, trail: string[]): void => {
-      if (state.get(id as MissionId) === 'done') return;
-      expect(state.get(id as MissionId), `cycle: ${[...trail, id].join(' -> ')}`).not.toBe('visiting');
-      state.set(id as MissionId, 'visiting');
-      for (const next of MISSIONS[id as MissionId]?.unlockedBy ?? []) walk(next, [...trail, id]);
-      state.set(id as MissionId, 'done');
+      if (state.get(id) === 'done') return;
+      expect(state.get(id), `cycle: ${[...trail, id].join(' -> ')}`).not.toBe('visiting');
+      state.set(id, 'visiting');
+      for (const next of MISSIONS[id]?.unlockedBy ?? []) walk(next, [...trail, id]);
+      state.set(id, 'done');
     };
     for (const id of Object.keys(MISSIONS)) walk(id, []);
   });
@@ -63,7 +63,7 @@ describe('catalog integrity', () => {
       }
     }
     for (const id of Object.keys(MISSIONS)) {
-      expect(reachable.has(id as MissionId), `${id} is unreachable and strands its content`).toBe(true);
+      expect(reachable.has(id), `${id} is unreachable and strands its content`).toBe(true);
     }
   });
 
@@ -86,8 +86,26 @@ describe('catalog integrity', () => {
     }
   });
 
+  it('longer missions have strictly better expected value per hour', () => {
+    const evPerHour = (m: MissionDef): number => {
+      const totalWeight = m.lootTable.reduce((s, e) => s + e.weight, 0);
+      const evPerRoll = m.lootTable.reduce(
+        (s, e) => s + (e.weight / totalWeight) * ((e.minQty + e.maxQty) / 2) * (ITEMS[e.itemId]?.baseValue ?? 0),
+        0,
+      );
+      return evPerRoll * m.rollsPerRun * (3_600_000 / m.durationMs);
+    };
+    const byDuration = Object.values(MISSIONS).sort((a, b) => a.durationMs - b.durationMs);
+    for (let i = 1; i < byDuration.length; i++) {
+      expect(
+        evPerHour(byDuration[i]!),
+        `${byDuration[i]!.id} must out-earn ${byDuration[i - 1]!.id} per hour`,
+      ).toBeGreaterThan(evPerHour(byDuration[i - 1]!));
+    }
+  });
+
   it('lookups return undefined for unknown ids rather than throwing', () => {
-    expect(getItem('nope' as any)).toBeUndefined();
-    expect(getMission('nope' as any)).toBeUndefined();
+    expect(getItem('nope')).toBeUndefined();
+    expect(getMission('nope')).toBeUndefined();
   });
 });

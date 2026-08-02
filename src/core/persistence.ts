@@ -20,7 +20,7 @@ function looksLikeGameState(value: unknown): value is GameState {
   const s = value as Partial<GameState>;
   return (
     typeof s.version === 'number' &&
-    Array.isArray(s.heroes) &&
+    Array.isArray(s.heroes) && s.heroes.length > 0 &&
     Array.isArray(s.warehouse) &&
     typeof s.completions === 'object' && s.completions !== null &&
     typeof s.rng === 'object' && s.rng !== null &&

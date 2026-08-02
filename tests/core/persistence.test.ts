@@ -115,6 +115,15 @@ describe('load failure modes', () => {
     const { recovered } = load(memoryStorage({ [SAVE_KEY]: bad }), 1);
     expect(recovered).toBe(true);
   });
+
+  it('rejects a save with an empty hero roster', () => {
+    const bad = JSON.stringify({ ...testState(), heroes: [] });
+    const storage = memoryStorage({ [SAVE_KEY]: bad });
+    const { state, recovered } = load(storage, 1);
+    expect(recovered).toBe(true);
+    expect(state.heroes).toHaveLength(HERO_COUNT);
+    expect(storage.getItem(BACKUP_KEY)).toBe(bad);
+  });
 });
 
 describe('sanitize', () => {

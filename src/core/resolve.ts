@@ -16,6 +16,27 @@ export function resolveUpTo(
 ): { state: GameState; events: GameEvent[] } {
   const s = structuredClone(state);
   const events: GameEvent[] = [];
+
+  // A backwards clock (NTP correction, or the user changing system time)
+  // must grant nothing. Clamping lastResolvedAt alone is not enough: a
+  // hero dispatched while the clock was set ahead carries a future
+  // startedAt, and would sit inert until real time caught up — potentially
+  // for months. Clamp the assignments too, so the run restarts from the
+  // corrected present rather than granting time that never passed.
+  if (now < s.lastResolvedAt) {
+    for (const hero of s.heroes) {
+      const assignment = hero.assignment;
+      if (!assignment) continue;
+      assignment.startedAt = Math.min(assignment.startedAt, now);
+      if (assignment.blockedAt !== null) {
+        assignment.blockedAt = Math.min(assignment.blockedAt, now);
+      }
+    }
+    s.lastResolvedAt = now;
+    events.push({ type: 'ClockRewound', to: now });
+    return { state: s, events };
+  }
+
   const rng = createRng(s.rng.seed, s.rng.cursor);
 
   for (const hero of s.heroes) {

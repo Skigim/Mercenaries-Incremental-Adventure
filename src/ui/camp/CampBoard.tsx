@@ -12,7 +12,7 @@ import type { Game } from '../useGame';
 const LEVEL_UP_BADGE_MS = 900;
 
 export function CampBoard({ game }: { game: Game }) {
-  const { state, now, welcomeBack, dismissWelcome, run } = game;
+  const { state, now, welcomeBack, showWelcome, dismissWelcome, run } = game;
   const isMobile = useMediaQuery('(max-width: 820px)');
   const [selectedHeroId, setSelectedHeroId] = useState<HeroId>(state.heroes[0]!.id);
   const [activeTab, setActiveTab] = useState<TabId>('heroes');
@@ -52,7 +52,7 @@ export function CampBoard({ game }: { game: Game }) {
       <div className="camp-card">
         <div className="camp-region-art" aria-hidden="true" />
 
-        {welcomeBack && <WelcomeDialog events={welcomeBack} onDismiss={dismissWelcome} />}
+        {showWelcome && welcomeBack && <WelcomeDialog events={welcomeBack} onDismiss={dismissWelcome} />}
 
         <header className="camp-header">
           <div className="camp-header-brand">

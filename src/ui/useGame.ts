@@ -19,6 +19,7 @@ export interface Game {
   state: GameState;
   now: number;
   welcomeBack: GameEvent[] | null;
+  showWelcome: boolean;
   dismissWelcome(): void;
   run(cmd: Command): GameEvent[];
 }
@@ -38,9 +39,10 @@ export function useGame(storage: Storage = browserStorage()): Game {
 
   const [state, setState] = useState<GameState>(boot.state);
   const [now, setNow] = useState(() => systemClock.now());
-  const [welcomeBack, setWelcomeBack] = useState<GameEvent[] | null>(
+  const [welcomeBack] = useState<GameEvent[] | null>(
     boot.events.length > 0 ? boot.events : null,
   );
+  const [showWelcome, setShowWelcome] = useState(boot.events.length > 0);
 
   // Re-derive on an interval. This drives progress bars and picks up
   // completions; it is a display concern, never a source of truth.
@@ -106,7 +108,7 @@ export function useGame(storage: Storage = browserStorage()): Game {
     return events;
   }, []);
 
-  const dismissWelcome = useCallback(() => setWelcomeBack(null), []);
+  const dismissWelcome = useCallback(() => setShowWelcome(false), []);
 
-  return { state, now, welcomeBack, dismissWelcome, run };
+  return { state, now, welcomeBack, showWelcome, dismissWelcome, run };
 }

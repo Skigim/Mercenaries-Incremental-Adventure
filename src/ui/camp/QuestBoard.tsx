@@ -7,10 +7,10 @@ import type { GameEvent, GameState, HeroId, MissionDef } from '../../core/types'
 
 function primaryLoot(mission: MissionDef): { itemTag: string; rareTag: string | null } {
   const materials = mission.lootTable.filter((e) => getItem(e.itemId)?.kind === 'material');
-  const top = materials.reduce((best, e) => (e.weight > best.weight ? e : best), materials[0]!);
+  const top = materials.length > 0 ? materials.reduce((best, e) => (e.weight > best.weight ? e : best)) : null;
   const rare = mission.lootTable.find((e) => getItem(e.itemId)?.kind === 'trinket');
   return {
-    itemTag: getItem(top.itemId)?.name ?? '',
+    itemTag: top ? (getItem(top.itemId)?.name ?? '') : '',
     rareTag: rare ? (getItem(rare.itemId)?.name ?? null) : null,
   };
 }

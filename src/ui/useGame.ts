@@ -20,7 +20,7 @@ export interface Game {
   now: number;
   welcomeBack: GameEvent[] | null;
   dismissWelcome(): void;
-  run(cmd: Command): void;
+  run(cmd: Command): GameEvent[];
 }
 
 export function useGame(storage: Storage = browserStorage()): Game {
@@ -100,8 +100,10 @@ export function useGame(storage: Storage = browserStorage()): Game {
     return () => window.removeEventListener('pagehide', flush);
   }, [store]);
 
-  const run = useCallback((cmd: Command) => {
-    setState((prev) => applyCommand(prev, cmd, systemClock.now()).state);
+  const run = useCallback((cmd: Command): GameEvent[] => {
+    const { state: nextState, events } = applyCommand(stateRef.current, cmd, systemClock.now());
+    setState(nextState);
+    return events;
   }, []);
 
   const dismissWelcome = useCallback(() => setWelcomeBack(null), []);

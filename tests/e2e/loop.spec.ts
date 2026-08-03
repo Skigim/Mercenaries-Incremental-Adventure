@@ -32,7 +32,7 @@ function saveWithHeroDispatched(startedAgoMs: number) {
 test('a fresh game shows three idle heroes and only the starting mission', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('hero-card')).toHaveCount(3);
-  await expect(page.getByTestId('hero-status').first()).toHaveText('Idle');
+  await expect(page.getByTestId('hero-status').first()).toHaveText('Idle — send him somewhere');
   await expect(page.getByTestId('dispatch-tuvale_gather')).toBeVisible();
   await expect(page.getByTestId('dispatch-tuvale_thicket')).toHaveCount(0);
 });
@@ -58,6 +58,9 @@ test('an offline gap resolves on boot and collects to the warehouse', async ({ p
 
   // The hero holds loot and has stopped with a full pack.
   await expect(page.getByTestId('hero-pack').first()).not.toContainText('Pack 0 /');
+
+  // The welcome dialog is a modal scrim over the board — dismiss it before interacting further.
+  await page.getByTestId('welcome-back').getByRole('button', { name: 'Nice, continue' }).click();
 
   await page.getByTestId('collect-all').click();
   await expect(page.getByTestId('hero-pack').first()).toContainText('Pack 0 /');
@@ -85,6 +88,10 @@ test('progress survives a reload without rerolling loot', async ({ page }) => {
   );
 
   await page.goto('/');
+
+  // The welcome dialog is a modal scrim over the board — dismiss it before interacting further.
+  await page.getByTestId('welcome-back').getByRole('button', { name: 'Nice, continue' }).click();
+
   await page.getByTestId('collect-all').click();
   const before = await page.getByTestId('warehouse-total').textContent();
 
@@ -99,4 +106,30 @@ test('Camp Board design tokens are loaded', async ({ page }) => {
   await page.goto('/');
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(bg).toBe('rgb(245, 234, 216)'); // --color-bg: #f5ead8
+});
+
+test('desktop layout shows the full dashboard with no bottom tabs', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  await expect(page.getByTestId('mobile-tab-heroes')).toHaveCount(0);
+  await expect(page.getByTestId('hero-card')).toHaveCount(3);
+  await expect(page.getByTestId('dispatch-tuvale_gather')).toBeVisible();
+  await expect(page.getByTestId('warehouse-total')).toBeVisible();
+});
+
+test('mobile layout shows one tab at a time via the bottom nav', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  await expect(page.getByTestId('mobile-tab-heroes')).toBeVisible();
+  await expect(page.getByTestId('hero-card')).toHaveCount(3);
+  await expect(page.getByTestId('dispatch-tuvale_gather')).toHaveCount(0);
+
+  await page.getByTestId('mobile-tab-quests').click();
+  await expect(page.getByTestId('dispatch-tuvale_gather')).toBeVisible();
+  await expect(page.getByTestId('hero-card')).toHaveCount(0);
+
+  await page.getByTestId('mobile-tab-warehouse').click();
+  await expect(page.getByTestId('warehouse-total')).toBeVisible();
+  await expect(page.getByTestId('dispatch-tuvale_gather')).toHaveCount(0);
 });

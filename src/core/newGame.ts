@@ -8,7 +8,7 @@ export const CURRENT_VERSION = 1;
  */
 export const HERO_COUNT = 3;
 
-const NAMES = ['Bryn', 'Corvin', 'Maela', 'Toller', 'Isolde'];
+const NAMES = ['Warrior', 'Ranger', 'Mage', 'Rogue', 'Cleric'];
 
 function makeHero(index: number): Hero {
   return {

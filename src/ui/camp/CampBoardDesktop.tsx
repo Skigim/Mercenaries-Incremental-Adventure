@@ -1,4 +1,4 @@
-import { CARD_ROTATIONS, HeroCard } from './HeroCard';
+import { HeroList } from './HeroList';
 import { QuestBoard } from './QuestBoard';
 import { SupplyCrate } from './SupplyCrate';
 import type { Command } from '../../core/commands';
@@ -23,19 +23,14 @@ export function CampBoardDesktop({
 }) {
   return (
     <div className="camp-desktop-body">
-      <div className="hero-grid">
-        {state.heroes.map((hero, i) => (
-          <HeroCard
-            key={hero.id}
-            hero={hero}
-            now={now}
-            run={run}
-            justLeveledUp={justLeveledUp.has(hero.id)}
-            rotation={CARD_ROTATIONS[i % CARD_ROTATIONS.length]!}
-            onSendToQuest={onSendToQuest}
-          />
-        ))}
-      </div>
+      <HeroList
+        heroes={state.heroes}
+        now={now}
+        run={run}
+        justLeveledUp={justLeveledUp}
+        onSendToQuest={onSendToQuest}
+        className="hero-grid"
+      />
 
       <div className="board-row">
         <QuestBoard state={state} selectedHeroId={selectedHeroId} onSelectHero={onSelectHero} run={run} variant="desktop" />

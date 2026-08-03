@@ -1,4 +1,4 @@
-import { CARD_ROTATIONS, HeroCard } from './HeroCard';
+import { HeroList } from './HeroList';
 import { QuestBoard } from './QuestBoard';
 import { SupplyCrate } from './SupplyCrate';
 import { BottomNav, type TabId } from './BottomNav';
@@ -29,19 +29,14 @@ export function CampBoardMobile({
   return (
     <div className="camp-mobile-body">
       {activeTab === 'heroes' && (
-        <div className="mobile-hero-list">
-          {state.heroes.map((hero, i) => (
-            <HeroCard
-              key={hero.id}
-              hero={hero}
-              now={now}
-              run={run}
-              justLeveledUp={justLeveledUp.has(hero.id)}
-              rotation={CARD_ROTATIONS[i % CARD_ROTATIONS.length]!}
-              onSendToQuest={onSendToQuest}
-            />
-          ))}
-        </div>
+        <HeroList
+          heroes={state.heroes}
+          now={now}
+          run={run}
+          justLeveledUp={justLeveledUp}
+          onSendToQuest={onSendToQuest}
+          className="mobile-hero-list"
+        />
       )}
 
       {activeTab === 'quests' && (

@@ -94,3 +94,9 @@ test('progress survives a reload without rerolling loot', async ({ page }) => {
 
   await expect(page.getByTestId('warehouse-total')).toHaveText(before ?? '');
 });
+
+test('Camp Board design tokens are loaded', async ({ page }) => {
+  await page.goto('/');
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bg).toBe('rgb(245, 234, 216)'); // --color-bg: #f5ead8
+});

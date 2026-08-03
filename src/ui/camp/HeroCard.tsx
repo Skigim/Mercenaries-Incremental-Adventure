@@ -14,6 +14,8 @@ export function HeroCard({
   justLeveledUp,
   rotation,
   onSendToQuest,
+  selected,
+  onSelect,
 }: {
   hero: Hero;
   now: number;
@@ -21,6 +23,8 @@ export function HeroCard({
   justLeveledUp: boolean;
   rotation: string;
   onSendToQuest: (heroId: HeroId) => void;
+  selected: boolean;
+  onSelect: (heroId: HeroId) => void;
 }) {
   const assignment = hero.assignment;
   const mission = assignment ? getMission(assignment.missionId) : undefined;
@@ -44,10 +48,11 @@ export function HeroCard({
 
   return (
     <article
-      className="card elev-md hero-card"
+      className={`card elev-md hero-card${selected ? ' hero-card-selected' : ''}`}
       style={{ transform: `rotate(${rotation})` }}
       data-testid="hero-card"
       data-hero-id={hero.id}
+      onClick={() => onSelect(hero.id)}
     >
       {justLeveledUp && <span className="tag tag-accent-2 hero-badge">Ding! Level up</span>}
 

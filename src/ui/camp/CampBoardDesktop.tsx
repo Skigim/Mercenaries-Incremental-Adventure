@@ -35,7 +35,7 @@ export function CampBoardDesktop({
       />
 
       <div className="board-row">
-        <QuestBoard state={state} selectedHeroId={selectedHeroId} onSelectHero={onSelectHero} run={run} variant="desktop" />
+        <QuestBoard state={state} selectedHeroId={selectedHeroId} run={run} variant="desktop" />
         <SupplyCrate state={state} selectedHeroId={selectedHeroId} run={run} variant="desktop" />
       </div>
     </div>

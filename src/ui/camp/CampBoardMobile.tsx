@@ -42,7 +42,7 @@ export function CampBoardMobile({
       )}
 
       {activeTab === 'quests' && (
-        <QuestBoard state={state} selectedHeroId={selectedHeroId} onSelectHero={onSelectHero} run={run} variant="mobile" />
+        <QuestBoard state={state} selectedHeroId={selectedHeroId} run={run} variant="mobile" />
       )}
 
       {activeTab === 'warehouse' && (

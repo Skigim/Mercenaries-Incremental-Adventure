@@ -29,6 +29,8 @@ export function CampBoardDesktop({
         run={run}
         justLeveledUp={justLeveledUp}
         onSendToQuest={onSendToQuest}
+        selectedHeroId={selectedHeroId}
+        onSelect={onSelectHero}
         className="hero-grid"
       />
 

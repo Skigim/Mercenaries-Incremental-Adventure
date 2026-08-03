@@ -35,6 +35,8 @@ export function CampBoardMobile({
           run={run}
           justLeveledUp={justLeveledUp}
           onSendToQuest={onSendToQuest}
+          selectedHeroId={selectedHeroId}
+          onSelect={onSelectHero}
           className="mobile-hero-list"
         />
       )}

@@ -61,7 +61,7 @@ export function QuestBoard({
           const tags = (
             <div className="mission-row-tags">
               <span className="tag tag-neutral">{formatDuration(mission.durationMs)}</span>
-              <span className="tag tag-neutral">{itemTag}</span>
+              {itemTag && <span className="tag tag-neutral">{itemTag}</span>}
               {rareTag && <span className="tag tag-accent-2">{rareTag}</span>}
             </div>
           );

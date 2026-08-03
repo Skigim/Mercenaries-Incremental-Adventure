@@ -18,27 +18,21 @@ function primaryLoot(mission: MissionDef): { itemTag: string; rareTag: string | 
 export function QuestBoard({
   state,
   selectedHeroId,
-  onSelectHero,
   run,
   variant,
 }: {
   state: GameState;
   selectedHeroId: HeroId;
-  onSelectHero: (id: HeroId) => void;
   run: (cmd: Command) => GameEvent[];
   variant: 'desktop' | 'mobile';
 }) {
   const missions = Object.values(MISSIONS);
+  const selectedHero = state.heroes.find((h) => h.id === selectedHeroId);
 
   const heroSelect = (
-    <label className="hero-select-row">
-      Sending
-      <select className="hero-select" value={selectedHeroId} onChange={(e) => onSelectHero(e.target.value)}>
-        {state.heroes.map((h) => (
-          <option key={h.id} value={h.id}>{h.name}</option>
-        ))}
-      </select>
-    </label>
+    <div className="hero-select-row" data-testid="sending-hero">
+      Sending: {selectedHero?.name ?? ''}
+    </div>
   );
 
   return (

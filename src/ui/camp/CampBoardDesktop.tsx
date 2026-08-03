@@ -29,11 +29,13 @@ export function CampBoardDesktop({
         run={run}
         justLeveledUp={justLeveledUp}
         onSendToQuest={onSendToQuest}
+        selectedHeroId={selectedHeroId}
+        onSelect={onSelectHero}
         className="hero-grid"
       />
 
       <div className="board-row">
-        <QuestBoard state={state} selectedHeroId={selectedHeroId} onSelectHero={onSelectHero} run={run} variant="desktop" />
+        <QuestBoard state={state} selectedHeroId={selectedHeroId} run={run} variant="desktop" />
         <SupplyCrate state={state} selectedHeroId={selectedHeroId} run={run} variant="desktop" />
       </div>
     </div>

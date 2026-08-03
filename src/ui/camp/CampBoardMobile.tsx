@@ -35,12 +35,14 @@ export function CampBoardMobile({
           run={run}
           justLeveledUp={justLeveledUp}
           onSendToQuest={onSendToQuest}
+          selectedHeroId={selectedHeroId}
+          onSelect={onSelectHero}
           className="mobile-hero-list"
         />
       )}
 
       {activeTab === 'quests' && (
-        <QuestBoard state={state} selectedHeroId={selectedHeroId} onSelectHero={onSelectHero} run={run} variant="mobile" />
+        <QuestBoard state={state} selectedHeroId={selectedHeroId} run={run} variant="mobile" />
       )}
 
       {activeTab === 'warehouse' && (

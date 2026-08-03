@@ -8,6 +8,8 @@ export function HeroList({
   run,
   justLeveledUp,
   onSendToQuest,
+  selectedHeroId,
+  onSelect,
   className,
 }: {
   heroes: Hero[];
@@ -15,6 +17,8 @@ export function HeroList({
   run: (cmd: Command) => GameEvent[];
   justLeveledUp: Set<HeroId>;
   onSendToQuest: (id: HeroId) => void;
+  selectedHeroId: HeroId;
+  onSelect: (id: HeroId) => void;
   className: string;
 }) {
   return (
@@ -28,6 +32,8 @@ export function HeroList({
           justLeveledUp={justLeveledUp.has(hero.id)}
           rotation={CARD_ROTATIONS[i % CARD_ROTATIONS.length]!}
           onSendToQuest={onSendToQuest}
+          selected={selectedHeroId === hero.id}
+          onSelect={onSelect}
         />
       ))}
     </div>

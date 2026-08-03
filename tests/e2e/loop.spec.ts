@@ -44,6 +44,24 @@ test('dispatching a hero puts them to work', async ({ page }) => {
   await expect(page.getByTestId('hero-status').first()).toContainText('left');
 });
 
+test('clicking a hero card selects them for dispatch', async ({ page }) => {
+  await page.goto('/');
+
+  // Default selection is the first hero, Warrior.
+  await expect(page.getByTestId('sending-hero')).toContainText('Warrior');
+
+  // Click the second hero's card (Ranger) to select them instead.
+  const rangerCard = page.locator('[data-testid="hero-card"][data-hero-id="hero_2"]');
+  await rangerCard.click();
+
+  await expect(page.getByTestId('sending-hero')).toContainText('Ranger');
+  await expect(rangerCard).toHaveClass(/hero-card-selected/);
+
+  // Dispatching now sends Ranger, not Warrior.
+  await page.getByTestId('dispatch-tuvale_gather').click();
+  await expect(rangerCard.getByTestId('hero-status')).toContainText('Gather by the Roadside');
+});
+
 test('an offline gap resolves on boot and collects to the warehouse', async ({ page }) => {
   await page.addInitScript(
     ([key, save]) => window.localStorage.setItem(key as string, save as string),
